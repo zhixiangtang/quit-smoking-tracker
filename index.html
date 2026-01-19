@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="戒烟日期记录 - 追踪你的戒烟天数">
+    <meta name="theme-color" content="#4CAF50">
+    <title>戒烟日期记录</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚭</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-smoking-ban"></i> 戒烟日期记录</h1>
+            <p class="subtitle">记录你的戒烟天数，迈向健康生活</p>
+        </header>
+
+        <main>
+            <div class="card main-card">
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <div class="stat-label">已戒烟</div>
+                        <div class="stat-value" id="daysCount">0</div>
+                        <div class="stat-unit">天</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">节省金额</div>
+                        <div class="stat-value" id="moneySaved">0</div>
+                        <div class="stat-unit">元</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">健康改善</div>
+                        <div class="stat-value" id="healthScore">0</div>
+                        <div class="stat-unit">分</div>
+                    </div>
+                </div>
+
+                <div class="date-info">
+                    <p><i class="fas fa-calendar-alt"></i> 戒烟开始日期: <span id="quitDate">未设置</span></p>
+                    <p><i class="fas fa-clock"></i> 戒烟时长: <span id="quitDuration">0 天 0 小时 0 分钟</span></p>
+                </div>
+
+                <div class="milestones">
+                    <h3><i class="fas fa-trophy"></i> 戒烟里程碑</h3>
+                    <div class="milestone-list">
+                        <div class="milestone" data-days="1"><i class="fas fa-check-circle"></i> 24小时 - 血压恢复正常</div>
+                        <div class="milestone" data-days="2"><i class="fas fa-check-circle"></i> 48小时 - 味觉嗅觉改善</div>
+                        <div class="milestone" data-days="3"><i class="fas fa-check-circle"></i> 72小时 - 呼吸更顺畅</div>
+                        <div class="milestone" data-days="7"><i class="fas fa-check-circle"></i> 1周 - 循环系统改善</div>
+                        <div class="milestone" data-days="30"><i class="fas fa-check-circle"></i> 1个月 - 肺功能提升</div>
+                        <div class="milestone" data-days="90"><i class="fas fa-check-circle"></i> 3个月 - 咳嗽减少</div>
+                        <div class="milestone" data-days="365"><i class="fas fa-check-circle"></i> 1年 - 心脏病风险减半</div>
+                        <div class="milestone" data-days="1825"><i class="fas fa-check-circle"></i> 5年 - 中风风险正常</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card control-card">
+                <h3><i class="fas fa-calendar-plus"></i> 设置戒烟日期</h3>
+                <div class="date-input">
+                    <input type="date" id="quitDateInput" max="">
+                    <button id="setDateBtn" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 设置戒烟日期
+                    </button>
+                </div>
+                <div class="quick-buttons">
+                    <button id="todayBtn" class="btn btn-secondary">
+                        <i class="fas fa-calendar-day"></i> 从今天开始
+                    </button>
+                    <button id="yesterdayBtn" class="btn btn-secondary">
+                        <i class="fas fa-history"></i> 从昨天开始
+                    </button>
+                </div>
+            </div>
+
+            <div class="card settings-card">
+                <h3><i class="fas fa-cog"></i> 设置</h3>
+                <div class="setting-item">
+                    <label for="dailyCost"><i class="fas fa-money-bill-wave"></i> 每日吸烟花费（元）</label>
+                    <input type="number" id="dailyCost" min="0" step="0.1" value="30">
+                </div>
+                <div class="setting-item">
+                    <label><i class="fas fa-chart-line"></i> 显示单位</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="unit" value="days" checked> 天数</label>
+                        <label><input type="radio" name="unit" value="hours"> 小时</label>
+                        <label><input type="radio" name="unit" value="minutes"> 分钟</label>
+                    </div>
+                </div>
+                <button id="resetBtn" class="btn btn-danger">
+                    <i class="fas fa-redo"></i> 重置数据
+                </button>
+            </div>
+
+            <div class="card share-card">
+                <h3><i class="fas fa-share-alt"></i> 分享成就</h3>
+                <p>坚持 <span id="shareDays">0</span> 天，节省了 <span id="shareMoney">0</span> 元！</p>
+                <div class="share-buttons">
+                    <button id="shareTextBtn" class="btn btn-share">
+                        <i class="fas fa-copy"></i> 复制分享文本
+                    </button>
+                    <button id="shareImageBtn" class="btn btn-share">
+                        <i class="fas fa-image"></i> 生成分享图片
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>© 2023 戒烟日期记录 | 健康生活，从戒烟开始</p>
+            <p class="tips">
+                <i class="fas fa-lightbulb"></i> 提示：数据保存在本地浏览器中，清除浏览器数据会丢失记录
+            </p>
+        </footer>
+    </div>
+
+    <!-- 分享图片预览 -->
+    <div id="imagePreview" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>分享图片</h3>
+            <canvas id="shareCanvas" width="800" height="400"></canvas>
+            <br>
+            <button id="downloadBtn" class="btn btn-primary">
+                <i class="fas fa-download"></i> 下载图片
+            </button>
+        </div>
+    </div>
+
+    <!-- 通知 -->
+    <div id="notification" class="notification"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #4CAF50;
+    --secondary-color: #2196F3;
+    --danger-color: #f44336;
+    --light-color: #f5f5f5;
+    --dark-color: #333;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--dark-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.main-card {
+    text-align: center;
+}
+
+.stats-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.stat-item {
+    background: linear-gradient(135deg, var(--primary-color), #8BC34A);
+    color: white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 3rem;
+    font-weight: bold;
+    line-height: 1;
+    margin: 10px 0;
+}
+
+.stat-unit {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.date-info {
+    background: var(--light-color);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.date-info p {
+    margin: 10px 0;
+    font-size: 1.1rem;
+}
+
+.date-info i {
+    color: var(--primary-color);
+    margin-right: 10px;
+}
+
+.milestones {
+    margin-top: 30px;
+}
+
+.milestone-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.milestone {
+    padding: 15px;
+    background: var(--light-color);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.milestone.completed {
+    background: var(--primary-color);
+    color: white;
+}
+
+.milestone.completed i {
+    color: #FFEB3B;
+}
+
+.control-card, .settings-card, .share-card {
+    text-align: center;
+}
+
+.date-input {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+input[type="date"], input[type="number"] {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+input[type="date"]:focus, input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #45a049;
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #1976D2;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.btn-share {
+    background: #9C27B0;
+    color: white;
+}
+
+.btn-share:hover {
+    background: #7B1FA2;
+}
+
+.quick-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.setting-item {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.setting-item i {
+    color: var(--primary-color);
+    margin-right: 8px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+footer {
+    text-align: center;
+    color: white;
+    margin-top: 40px;
+    padding: 20px;
+    opacity: 0.8;
+}
+
+.tips {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 900px;
+    text-align: center;
+}
+
+.close {
+    float: right;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--primary-color);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    display: none;
+    z-index: 1001;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2rem;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .stats-display {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+    }
+    
+    .date-input {
+        flex-direction: column;
+    }
+    
+    .quick-buttons, .share-buttons {
+        flex-direction: column;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    #shareCanvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 400px;
+    }
+}
+
+/* 加载动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* 进度条样式 */
+.progress-bar {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
