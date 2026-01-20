@@ -2,848 +2,310 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="戒烟日期记录 - 追踪你的戒烟天数、健康改善和成就">
-    <meta name="keywords" content="戒烟,健康,记录,天数,戒烟助手">
-    <meta name="theme-color" content="#4CAF50">
-    <title>戒烟日期记录 - 你的戒烟助手</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%234CAF50%22>🚭</text></svg>">
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>戒烟助手 - 快速版</title>
+    <meta name="description" content="快速加载的戒烟日期记录工具">
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="core.css" as="style">
+    <link rel="preload" href="core.js" as="script">
+    
+    <!-- 内联关键CSS -->
+    <style>
+        /* 关键CSS - 首屏渲染所需的最小样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 加载指示器 */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 主内容区域 - 初始隐藏 */
+        #main-content {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        #main-content.loaded {
+            opacity: 1;
+        }
+        
+        /* 顶部导航 - 简化版 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 16px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1::before {
+            content: '🚭';
+            font-size: 1.8rem;
+        }
+        
+        /* 主统计卡片 */
+        .main-stats {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .time-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .days-large {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #4CAF50;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .days-label {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .quick-stat {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2196F3;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        /* 操作按钮 */
+        .actions {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid #eee;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+    </style>
+    
+    <!-- 非关键CSS异步加载 -->
+    <link rel="stylesheet" href="core.css" media="print" onload="this.media='all'">
 </head>
 <body>
     <!-- 加载动画 -->
-    <div id="loading" class="loading-overlay">
-        <div class="loading-spinner">
+    <div id="loading">
+        <div class="loading-content">
             <div class="spinner"></div>
+            <h2>戒烟助手</h2>
             <p>正在加载...</p>
         </div>
     </div>
-
+    
     <!-- 主容器 -->
     <div class="container">
-        <!-- 顶部导航 -->
-        <nav class="navbar">
-            <div class="nav-brand">
-                <i class="fas fa-smoking-ban"></i>
-                <h1>戒烟助手</h1>
+        <!-- 头部 -->
+        <header class="header">
+            <h1>戒烟助手</h1>
+        </header>
+        
+        <!-- 主内容区 -->
+        <main id="main-content" class="main-stats">
+            <!-- 时间统计卡片 -->
+            <div class="stat-card">
+                <h2>已戒烟时间</h2>
+                <div class="time-display">
+                    <div class="days-large" id="daysCount">0</div>
+                    <div class="days-label">天</div>
+                </div>
+                
+                <div class="quick-stats">
+                    <div class="quick-stat">
+                        <div class="stat-value" id="moneySaved">0</div>
+                        <div class="stat-label">节省金额</div>
+                    </div>
+                    <div class="quick-stat">
+                        <div class="stat-value" id="healthScore">0%</div>
+                        <div class="stat-label">健康恢复</div>
+                    </div>
+                </div>
             </div>
-            <div class="nav-links">
-                <button class="nav-btn active" data-section="dashboard">
-                    <i class="fas fa-home"></i>
-                    <span>仪表盘</span>
-                </button>
-                <button class="nav-btn" data-section="health">
-                    <i class="fas fa-heartbeat"></i>
-                    <span>健康追踪</span>
-                </button>
-                <button class="nav-btn" data-section="stats">
-                    <i class="fas fa-chart-line"></i>
-                    <span>数据统计</span>
-                </button>
-                <button class="nav-btn" data-section="achievements">
-                    <i class="fas fa-trophy"></i>
-                    <span>成就系统</span>
-                </button>
-                <button class="nav-btn" data-section="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>设置</span>
-                </button>
+            
+            <!-- 里程碑卡片 -->
+            <div class="stat-card">
+                <h3>戒烟里程碑</h3>
+                <div id="milestones" class="milestones">
+                    <!-- 动态生成 -->
+                    <div class="milestone">
+                        <span class="milestone-days">24小时</span>
+                        <span class="milestone-text">血压恢复正常</span>
+                    </div>
+                </div>
             </div>
-            <button id="themeToggle" class="theme-toggle">
-                <i class="fas fa-moon"></i>
-            </button>
-        </nav>
-
-        <!-- 主内容区域 -->
-        <main class="main-content">
-            <!-- 仪表盘页面 -->
-            <section id="dashboard" class="page active">
-                <!-- 欢迎和快速统计 -->
-                <div class="welcome-card card">
-                    <div class="welcome-content">
-                        <h2>欢迎回来，戒烟勇士！</h2>
-                        <p id="motivationText">每一次坚持都让生活更美好</p>
-                        <div class="quick-stats">
-                            <div class="quick-stat">
-                                <i class="fas fa-calendar-check"></i>
-                                <div>
-                                    <h3 id="currentStreak">0</h3>
-                                    <p>当前连续天数</p>
-                                </div>
-                            </div>
-                            <div class="quick-stat">
-                                <i class="fas fa-piggy-bank"></i>
-                                <div>
-                                    <h3 id="totalSaved">0</h3>
-                                    <p>累计节省(元)</p>
-                                </div>
-                            </div>
-                            <div class="quick-stat">
-                                <i class="fas fa-lungs"></i>
-                                <div>
-                                    <h3 id="healthIndex">0</h3>
-                                    <p>健康指数</p>
-                                </div>
-                            </div>
-                        </div>
+            
+            <!-- 今日挑战 -->
+            <div class="stat-card">
+                <h3>今日挑战</h3>
+                <div id="dailyChallenge">
+                    <p>喝足8杯水，保持身体水分</p>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 25%"></div>
                     </div>
                 </div>
-
-                <!-- 主要统计卡片 -->
-                <div class="stats-grid">
-                    <div class="stat-card card">
-                        <div class="stat-header">
-                            <i class="fas fa-clock"></i>
-                            <h3>戒烟时长</h3>
-                        </div>
-                        <div class="stat-body">
-                            <div class="time-display" id="timeDisplay">
-                                <div class="time-unit">
-                                    <span class="time-value" id="days">0</span>
-                                    <span class="time-label">天</span>
-                                </div>
-                                <div class="time-unit">
-                                    <span class="time-value" id="hours">0</span>
-                                    <span class="time-label">小时</span>
-                                </div>
-                                <div class="time-unit">
-                                    <span class="time-value" id="minutes">0</span>
-                                    <span class="time-label">分钟</span>
-                                </div>
-                                <div class="time-unit">
-                                    <span class="time-value" id="seconds">0</span>
-                                    <span class="time-label">秒</span>
-                                </div>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-label">
-                                    <span>距离下个里程碑</span>
-                                    <span id="nextMilestone">30天</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="milestoneProgress" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card card">
-                        <div class="stat-header">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <h3>财务统计</h3>
-                        </div>
-                        <div class="stat-body">
-                            <div class="finance-stats">
-                                <div class="finance-item">
-                                    <span class="finance-label">今日节省</span>
-                                    <span class="finance-value" id="todaySaved">0元</span>
-                                </div>
-                                <div class="finance-item">
-                                    <span class="finance-label">本月节省</span>
-                                    <span class="finance-value" id="monthSaved">0元</span>
-                                </div>
-                                <div class="finance-item">
-                                    <span class="finance-label">累计节省</span>
-                                    <span class="finance-value" id="totalSavings">0元</span>
-                                </div>
-                                <div class="finance-item highlight">
-                                    <span class="finance-label">相当于</span>
-                                    <span class="finance-value" id="equivalentItem">0杯咖啡</span>
-                                </div>
-                            </div>
-                            <div class="savings-goal">
-                                <div class="goal-label">
-                                    <span>目标存款</span>
-                                    <span id="goalProgress">0/5000元</span>
-                                </div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="goalProgressFill" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card card">
-                        <div class="stat-header">
-                            <i class="fas fa-heart"></i>
-                            <h3>健康改善</h3>
-                        </div>
-                        <div class="stat-body">
-                            <div class="health-metrics">
-                                <div class="metric">
-                                    <div class="metric-icon" style="background: #4CAF50;">
-                                        <i class="fas fa-lungs"></i>
-                                    </div>
-                                    <div class="metric-info">
-                                        <span class="metric-value" id="lungRecovery">0%</span>
-                                        <span class="metric-label">肺部恢复</span>
-                                    </div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-icon" style="background: #2196F3;">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
-                                    <div class="metric-info">
-                                        <span class="metric-value" id="heartRisk">0%</span>
-                                        <span class="metric-label">心脏病风险降低</span>
-                                    </div>
-                                </div>
-                                <div class="metric">
-                                    <div class="metric-icon" style="background: #9C27B0;">
-                                        <i class="fas fa-brain"></i>
-                                    </div>
-                                    <div class="metric-info">
-                                        <span class="metric-value" id="nicotineFree">0%</span>
-                                        <span class="metric-label">尼古丁清除</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="health-tip">
-                                <i class="fas fa-lightbulb"></i>
-                                <p id="healthTip">坚持就是胜利！</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stat-card card">
-                        <div class="stat-header">
-                            <i class="fas fa-fire"></i>
-                            <h3>戒烟挑战</h3>
-                        </div>
-                        <div class="stat-body">
-                            <div class="challenge-status">
-                                <h4>今日挑战完成度</h4>
-                                <div class="challenges-list">
-                                    <div class="challenge-item" data-challenge="water">
-                                        <div class="challenge-icon">
-                                            <i class="fas fa-tint"></i>
-                                        </div>
-                                        <div class="challenge-progress">
-                                            <span>喝8杯水</span>
-                                            <div class="progress-bar small">
-                                                <div class="progress-fill" style="width: 25%"></div>
-                                            </div>
-                                        </div>
-                                        <button class="challenge-btn" data-action="complete">完成</button>
-                                    </div>
-                                    <div class="challenge-item" data-challenge="exercise">
-                                        <div class="challenge-icon">
-                                            <i class="fas fa-running"></i>
-                                        </div>
-                                        <div class="challenge-progress">
-                                            <span>运动30分钟</span>
-                                            <div class="progress-bar small">
-                                                <div class="progress-fill" style="width: 0%"></div>
-                                            </div>
-                                        </div>
-                                        <button class="challenge-btn" data-action="complete">完成</button>
-                                    </div>
-                                    <div class="challenge-item" data-challenge="meditation">
-                                        <div class="challenge-icon">
-                                            <i class="fas fa-spa"></i>
-                                        </div>
-                                        <div class="challenge-progress">
-                                            <span>冥想10分钟</span>
-                                            <div class="progress-bar small">
-                                                <div class="progress-fill" style="width: 0%"></div>
-                                            </div>
-                                        </div>
-                                        <button class="challenge-btn" data-action="complete">完成</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 快速操作 -->
-                <div class="action-buttons">
-                    <button id="setQuitDateBtn" class="action-btn primary">
-                        <i class="fas fa-calendar-plus"></i>
-                        <span>设置戒烟日期</span>
-                    </button>
-                    <button id="addCravingBtn" class="action-btn secondary">
-                        <i class="fas fa-plus-circle"></i>
-                        <span>记录烟瘾</span>
-                    </button>
-                    <button id="quickNoteBtn" class="action-btn secondary">
-                        <i class="fas fa-sticky-note"></i>
-                        <span>添加笔记</span>
-                    </button>
-                    <button id="shareProgressBtn" class="action-btn success">
-                        <i class="fas fa-share-alt"></i>
-                        <span>分享进度</span>
-                    </button>
-                </div>
-            </section>
-
-            <!-- 健康追踪页面 -->
-            <section id="health" class="page">
-                <div class="page-header">
-                    <h2><i class="fas fa-heartbeat"></i> 健康追踪</h2>
-                    <p>追踪你的健康改善过程</p>
-                </div>
-
-                <div class="health-grid">
-                    <div class="health-card card">
-                        <h3><i class="fas fa-chart-line"></i> 健康指标</h3>
-                        <div class="health-metrics-grid">
-                            <div class="health-metric">
-                                <div class="metric-header">
-                                    <i class="fas fa-lungs"></i>
-                                    <span>肺活量</span>
-                                </div>
-                                <div class="metric-value">+15%</div>
-                                <div class="metric-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 15%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="health-metric">
-                                <div class="metric-header">
-                                    <i class="fas fa-heart"></i>
-                                    <span>心率</span>
-                                </div>
-                                <div class="metric-value">-8 bpm</div>
-                                <div class="metric-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 40%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="health-metric">
-                                <div class="metric-header">
-                                    <i class="fas fa-weight"></i>
-                                    <span>体重变化</span>
-                                </div>
-                                <div class="metric-value">-2 kg</div>
-                                <div class="metric-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 20%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="health-metric">
-                                <div class="metric-header">
-                                    <i class="fas fa-bed"></i>
-                                    <span>睡眠质量</span>
-                                </div>
-                                <div class="metric-value">+25%</div>
-                                <div class="metric-progress">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: 25%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="health-card card">
-                        <h3><i class="fas fa-plus-circle"></i> 症状记录</h3>
-                        <div class="symptoms-tracker">
-                            <div class="symptom-form">
-                                <select id="symptomSelect" class="form-input">
-                                    <option value="">选择症状...</option>
-                                    <option value="craving">烟瘾发作</option>
-                                    <option value="anxiety">焦虑</option>
-                                    <option value="headache">头痛</option>
-                                    <option value="fatigue">疲劳</option>
-                                    <option value="irritability">易怒</option>
-                                    <option value="hunger">饥饿感</option>
-                                </select>
-                                <select id="symptomIntensity" class="form-input">
-                                    <option value="1">轻微</option>
-                                    <option value="2">中度</option>
-                                    <option value="3">严重</option>
-                                    <option value="4">非常严重</option>
-                                </select>
-                                <button id="recordSymptomBtn" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> 记录
-                                </button>
-                            </div>
-                            <div class="symptoms-history" id="symptomsHistory">
-                                <!-- 症状记录将在这里显示 -->
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="health-card card">
-                        <h3><i class="fas fa-notes-medical"></i> 每日健康日志</h3>
-                        <div class="daily-log">
-                            <textarea id="healthLog" class="form-input" rows="4" 
-                                      placeholder="记录今天的感受、进展和挑战..."></textarea>
-                            <div class="mood-selector">
-                                <span>今日心情:</span>
-                                <div class="mood-options">
-                                    <button class="mood-btn" data-mood="1">😢</button>
-                                    <button class="mood-btn" data-mood="2">😐</button>
-                                    <button class="mood-btn" data-mood="3">🙂</button>
-                                    <button class="mood-btn" data-mood="4">😊</button>
-                                    <button class="mood-btn" data-mood="5">😄</button>
-                                </div>
-                            </div>
-                            <button id="saveLogBtn" class="btn btn-primary">
-                                <i class="fas fa-save"></i> 保存日志
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="health-card card">
-                        <h3><i class="fas fa-capsules"></i> 应对策略</h3>
-                        <div class="coping-strategies">
-                            <div class="strategy">
-                                <div class="strategy-icon">
-                                    <i class="fas fa-tint"></i>
-                                </div>
-                                <div class="strategy-content">
-                                    <h4>喝水</h4>
-                                    <p>烟瘾发作时喝一杯水</p>
-                                </div>
-                            </div>
-                            <div class="strategy">
-                                <div class="strategy-icon">
-                                    <i class="fas fa-walking"></i>
-                                </div>
-                                <div class="strategy-content">
-                                    <h4>散步</h4>
-                                    <p>短距离散步分散注意力</p>
-                                </div>
-                            </div>
-                            <div class="strategy">
-                                <div class="strategy-icon">
-                                    <i class="fas fa-apple-alt"></i>
-                                </div>
-                                <div class="strategy-content">
-                                    <h4>健康零食</h4>
-                                    <p>准备水果或坚果</p>
-                                </div>
-                            </div>
-                            <div class="strategy">
-                                <div class="strategy-icon">
-                                    <i class="fas fa-breath"></i>
-                                </div>
-                                <div class="strategy-content">
-                                    <h4>深呼吸</h4>
-                                    <p>深呼吸10次</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 数据统计页面 -->
-            <section id="stats" class="page">
-                <div class="page-header">
-                    <h2><i class="fas fa-chart-line"></i> 数据统计</h2>
-                    <p>详细的数据分析和趋势</p>
-                </div>
-
-                <div class="stats-grid-full">
-                    <div class="stats-card card">
-                        <h3><i class="fas fa-chart-bar"></i> 戒烟趋势</h3>
-                        <div class="chart-container">
-                            <canvas id="trendChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="stats-card card">
-                        <h3><i class="fas fa-chart-pie"></i> 烟瘾分布</h3>
-                        <div class="chart-container">
-                            <canvas id="cravingChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="stats-card card">
-                        <h3><i class="fas fa-calendar-alt"></i> 月度报告</h3>
-                        <div class="monthly-report">
-                            <div class="report-header">
-                                <button id="prevMonth" class="btn-icon"><i class="fas fa-chevron-left"></i></button>
-                                <h4 id="currentMonth">2024年1月</h4>
-                                <button id="nextMonth" class="btn-icon"><i class="fas fa-chevron-right"></i></button>
-                            </div>
-                            <div class="report-stats">
-                                <div class="report-stat">
-                                    <span class="stat-label">戒烟天数</span>
-                                    <span class="stat-value" id="monthDays">0</span>
-                                </div>
-                                <div class="report-stat">
-                                    <span class="stat-label">节省金额</span>
-                                    <span class="stat-value" id="monthSavings">0元</span>
-                                </div>
-                                <div class="report-stat">
-                                    <span class="stat-label">烟瘾次数</span>
-                                    <span class="stat-value" id="monthCravings">0次</span>
-                                </div>
-                                <div class="report-stat">
-                                    <span class="stat-label">成功率</span>
-                                    <span class="stat-value" id="monthSuccess">0%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="stats-card card">
-                        <h3><i class="fas fa-trophy"></i> 个人记录</h3>
-                        <div class="personal-records">
-                            <div class="record">
-                                <div class="record-icon">
-                                    <i class="fas fa-crown"></i>
-                                </div>
-                                <div class="record-content">
-                                    <h4>最长连续戒烟</h4>
-                                    <p><span id="longestStreak">0</span> 天</p>
-                                </div>
-                            </div>
-                            <div class="record">
-                                <div class="record-icon">
-                                    <i class="fas fa-fire"></i>
-                                </div>
-                                <div class="record-content">
-                                    <h4>单日最高烟瘾</h4>
-                                    <p><span id="maxCravings">0</span> 次</p>
-                                </div>
-                            </div>
-                            <div class="record">
-                                <div class="record-icon">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                                <div class="record-content">
-                                    <h4>最高单日节省</h4>
-                                    <p><span id="maxDailySave">0</span> 元</p>
-                                </div>
-                            </div>
-                            <div class="record">
-                                <div class="record-icon">
-                                    <i class="fas fa-calendar-check"></i>
-                                </div>
-                                <div class="record-content">
-                                    <h4>连续坚持天数</h4>
-                                    <p><span id="currentStreakStat">0</span> 天</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 成就系统页面 -->
-            <section id="achievements" class="page">
-                <div class="page-header">
-                    <h2><i class="fas fa-trophy"></i> 成就系统</h2>
-                    <p>解锁成就，见证你的戒烟之旅</p>
-                </div>
-
-                <div class="achievements-stats card">
-                    <div class="achievement-stat">
-                        <i class="fas fa-trophy"></i>
-                        <div>
-                            <h3 id="totalAchievements">0</h3>
-                            <p>已解锁成就</p>
-                        </div>
-                    </div>
-                    <div class="achievement-stat">
-                        <i class="fas fa-star"></i>
-                        <div>
-                            <h3 id="achievementScore">0</h3>
-                            <p>成就积分</p>
-                        </div>
-                    </div>
-                    <div class="achievement-stat">
-                        <i class="fas fa-medal"></i>
-                        <div>
-                            <h3 id="nextAchievement">--</h3>
-                            <p>下一个成就</p>
-                        </div>
-                    </div>
-                    <div class="achievement-stat">
-                        <i class="fas fa-percentage"></i>
-                        <div>
-                            <h3 id="completionRate">0%</h3>
-                            <p>完成率</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="achievements-grid">
-                    <!-- 成就会通过JavaScript动态生成 -->
-                </div>
-            </section>
-
-            <!-- 设置页面 -->
-            <section id="settings" class="page">
-                <div class="page-header">
-                    <h2><i class="fas fa-cog"></i> 设置</h2>
-                    <p>个性化你的戒烟助手</p>
-                </div>
-
-                <div class="settings-grid">
-                    <div class="settings-card card">
-                        <h3><i class="fas fa-user-cog"></i> 基本设置</h3>
-                        <div class="setting-item">
-                            <label for="dailyCostInput">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>每日吸烟花费（元）</span>
-                            </label>
-                            <input type="number" id="dailyCostInput" min="0" step="1" value="30" class="form-input">
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-bell"></i>
-                                <span>每日提醒</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="dailyReminder">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label for="reminderTime">
-                                <i class="fas fa-clock"></i>
-                                <span>提醒时间</span>
-                            </label>
-                            <input type="time" id="reminderTime" value="20:00" class="form-input">
-                        </div>
-                    </div>
-
-                    <div class="settings-card card">
-                        <h3><i class="fas fa-chart-bar"></i> 显示设置</h3>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-palette"></i>
-                                <span>主题模式</span>
-                            </label>
-                            <select id="themeMode" class="form-input">
-                                <option value="auto">自动</option>
-                                <option value="light">浅色</option>
-                                <option value="dark">深色</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-language"></i>
-                                <span>语言</span>
-                            </label>
-                            <select id="language" class="form-input">
-                                <option value="zh">简体中文</option>
-                                <option value="en">English</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-ruler"></i>
-                                <span>显示单位</span>
-                            </label>
-                            <select id="displayUnit" class="form-input">
-                                <option value="days">天数</option>
-                                <option value="hours">小时</option>
-                                <option value="minutes">分钟</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-card card">
-                        <h3><i class="fas fa-database"></i> 数据管理</h3>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-cloud-download-alt"></i>
-                                <span>导出数据</span>
-                            </label>
-                            <button id="exportDataBtn" class="btn btn-secondary">
-                                <i class="fas fa-download"></i> 导出
-                            </button>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-cloud-upload-alt"></i>
-                                <span>导入数据</span>
-                            </label>
-                            <input type="file" id="importDataInput" accept=".json" class="form-input" style="display: none;">
-                            <button id="importDataBtn" class="btn btn-secondary">
-                                <i class="fas fa-upload"></i> 导入
-                            </button>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-sync-alt"></i>
-                                <span>自动备份</span>
-                            </label>
-                            <label class="switch">
-                                <input type="checkbox" id="autoBackup" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="settings-card card danger-zone">
-                        <h3><i class="fas fa-exclamation-triangle"></i> 危险区域</h3>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-eraser"></i>
-                                <span>清除所有数据</span>
-                            </label>
-                            <button id="clearDataBtn" class="btn btn-danger">
-                                <i class="fas fa-trash"></i> 清除
-                            </button>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <i class="fas fa-redo"></i>
-                                <span>重置戒烟日期</span>
-                            </label>
-                            <button id="resetQuitDateBtn" class="btn btn-danger">
-                                <i class="fas fa-calendar-times"></i> 重置
-                            </button>
-                        </div>
-                        <div class="warning-text">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <span>这些操作不可撤销，请谨慎操作</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="about-card card">
-                    <h3><i class="fas fa-info-circle"></i> 关于</h3>
-                    <div class="about-content">
-                        <p><strong>版本:</strong> 2.0.0</p>
-                        <p><strong>开发者:</strong> 戒烟助手团队</p>
-                        <p><strong>描述:</strong> 一个帮助你记录戒烟天数、追踪健康改善和达成成就的工具。</p>
-                        <p><strong>数据安全:</strong> 所有数据都保存在你的浏览器本地，不会上传到任何服务器。</p>
-                        <div class="social-links">
-                            <a href="#" class="social-link"><i class="fab fa-github"></i> GitHub</a>
-                            <a href="#" class="social-link"><i class="fas fa-question-circle"></i> 帮助文档</a>
-                            <a href="#" class="social-link"><i class="fas fa-envelope"></i> 联系我们</a>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
         </main>
-
-        <!-- 模态框 -->
-        <div id="modalOverlay" class="modal-overlay"></div>
-
-        <div id="quitDateModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-calendar-plus"></i> 设置戒烟日期</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="date-picker">
-                        <input type="date" id="quitDatePicker" class="form-input" max="">
-                        <div class="quick-dates">
-                            <button class="quick-date-btn" data-days="0">今天</button>
-                            <button class="quick-date-btn" data-days="-1">昨天</button>
-                            <button class="quick-date-btn" data-days="-7">一周前</button>
-                            <button class="quick-date-btn" data-days="-30">一个月前</button>
-                        </div>
-                    </div>
-                    <div class="modal-actions">
-                        <button id="confirmQuitDate" class="btn btn-primary">
-                            <i class="fas fa-check"></i> 确认设置
-                        </button>
-                        <button class="btn btn-secondary modal-close">
-                            <i class="fas fa-times"></i> 取消
-                        </button>
-                    </div>
-                </div>
-            </div>
+        
+        <!-- 操作按钮区域 -->
+        <div class="actions">
+            <button id="setDateBtn" class="btn btn-primary">
+                设置戒烟日期
+            </button>
+            <button id="recordCravingBtn" class="btn btn-secondary">
+                记录烟瘾
+            </button>
+            <button id="shareBtn" class="btn btn-secondary">
+                分享成就
+            </button>
         </div>
-
-        <div id="cravingModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-smoking"></i> 记录烟瘾</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="craving-form">
-                        <div class="form-group">
-                            <label>强度</label>
-                            <div class="intensity-selector">
-                                <button class="intensity-btn" data-intensity="1">轻微</button>
-                                <button class="intensity-btn" data-intensity="2">中等</button>
-                                <button class="intensity-btn active" data-intensity="3">强烈</button>
-                                <button class="intensity-btn" data-intensity="4">非常强烈</button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>诱因</label>
-                            <div class="trigger-tags">
-                                <button class="tag-btn" data-trigger="stress">压力</button>
-                                <button class="tag-btn" data-trigger="coffee">喝咖啡</button>
-                                <button class="tag-btn" data-trigger="alcohol">饮酒</button>
-                                <button class="tag-btn" data-trigger="boredom">无聊</button>
-                                <button class="tag-btn" data-trigger="social">社交场合</button>
-                                <button class="tag-btn" data-trigger="afterMeal">饭后</button>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>应对方式</label>
-                            <select id="copingMethod" class="form-input">
-                                <option value="water">喝水</option>
-                                <option value="walk">散步</option>
-                                <option value="breath">深呼吸</option>
-                                <option value="snack">吃零食</option>
-                                <option value="distraction">转移注意力</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>备注</label>
-                            <textarea id="cravingNote" class="form-input" rows="3" 
-                                      placeholder="记录当时的感受..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-actions">
-                        <button id="saveCraving" class="btn btn-primary">
-                            <i class="fas fa-save"></i> 保存记录
-                        </button>
-                        <button class="btn btn-secondary modal-close">
-                            <i class="fas fa-times"></i> 取消
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 通知 -->
-        <div id="notification" class="notification">
-            <div class="notification-content">
-                <i class="fas fa-check-circle"></i>
-                <span id="notificationMessage">操作成功</span>
-            </div>
-        </div>
-
-        <!-- 底部信息 -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>戒烟助手</h4>
-                    <p>你的戒烟之旅，我们一路相伴</p>
-                </div>
-                <div class="footer-section">
-                    <h4>统计数据</h4>
-                    <p>已帮助 <span id="totalUsers">1</span> 位用户累计戒烟 <span id="totalDays">0</span> 天</p>
-                </div>
-                <div class="footer-section">
-                    <h4>健康提示</h4>
-                    <p id="dailyTip">戒烟20分钟后，血压和心率开始恢复正常</p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2024 戒烟助手 | 数据完全本地保存 | 版本 2.0.0</p>
-            </div>
-        </footer>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
-    <script src="charts.js"></script>
-    <script src="achievements.js"></script>
-    <script src="health-data.js"></script>
+    
+    <!-- 模态框容器 -->
+    <div id="modalContainer"></div>
+    
+    <!-- 通知容器 -->
+    <div id="notificationContainer"></div>
+    
+    <!-- 核心JS立即加载 -->
+    <script src="core.js" defer></script>
+    
+    <!-- 延迟加载的JS -->
+    <script>
+        // 延迟加载非关键JS
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var script = document.createElement('script');
+                script.src = 'deferred.js';
+                script.async = true;
+                document.body.appendChild(script);
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
