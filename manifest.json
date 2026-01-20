@@ -1,15 +1,15 @@
 {
-  "name": "戒烟日期记录",
-  "short_name": "戒烟记录",
-  "description": "记录戒烟天数，追踪健康改善",
+  "name": "戒烟助手",
+  "short_name": "戒烟助手",
+  "description": "快速加载的戒烟日期记录工具",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#4CAF50",
-  "theme_color": "#4CAF50",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22 fill=%22%234CAF50%22>🚭</text></svg>",
-      "sizes": "192x192",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚭</text></svg>",
+      "sizes": "any",
       "type": "image/svg+xml"
     }
   ]
