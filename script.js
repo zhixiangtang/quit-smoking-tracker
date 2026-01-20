@@ -1,323 +1,459 @@
-class QuitSmokingTracker {
+// 主应用类
+class QuitSmokingApp {
     constructor() {
-        this.init();
-        this.bindEvents();
-        this.updateDisplay();
-        this.startTimer();
-    }
-
-    init() {
-        // 设置日期输入的最大值为今天
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('quitDateInput').max = today;
+        this.config = {
+            version: '2.0.0',
+            defaultDailyCost: 30,
+            milestones: [1, 3, 7, 14, 30, 60, 90, 180, 365, 730]
+        };
         
-        // 加载保存的数据
-        this.loadData();
-    }
-
-    bindEvents() {
-        // 设置戒烟日期按钮
-        document.getElementById('setDateBtn').addEventListener('click', () => this.setQuitDate());
-        
-        // 快捷按钮
-        document.getElementById('todayBtn').addEventListener('click', () => this.setToday());
-        document.getElementById('yesterdayBtn').addEventListener('click', () => this.setYesterday());
-        
-        // 重置按钮
-        document.getElementById('resetBtn').addEventListener('click', () => this.resetData());
-        
-        // 设置变化监听
-        document.getElementById('dailyCost').addEventListener('change', () => this.saveSettings());
-        document.querySelectorAll('input[name="unit"]').forEach(radio => {
-            radio.addEventListener('change', () => this.saveSettings());
-        });
-        
-        // 分享按钮
-        document.getElementById('shareTextBtn').addEventListener('click', () => this.copyShareText());
-        document.getElementById('shareImageBtn').addEventListener('click', () => this.generateShareImage());
-        document.getElementById('downloadBtn').addEventListener('click', () => this.downloadImage());
-        
-        // 关闭模态框
-        document.querySelector('.close').addEventListener('click', () => {
-            document.getElementById('imagePreview').style.display = 'none';
-        });
-        
-        // 点击外部关闭模态框
-        window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('imagePreview')) {
-                document.getElementById('imagePreview').style.display = 'none';
+        this.state = {
+            quitDate: null,
+            dailyCost: 30,
+            theme: 'light',
+            data: {
+                cravings: [],
+                symptoms: [],
+                dailyLogs: [],
+                achievements: []
             }
-        });
+        };
+        
+        this.init();
     }
-
+    
+    async init() {
+        // 加载数据
+        this.loadData();
+        
+        // 初始化UI
+        this.initUI();
+        
+        // 绑定事件
+        this.bindEvents();
+        
+        // 开始计时器
+        this.startTimer();
+        
+        // 隐藏加载动画
+        setTimeout(() => {
+            document.getElementById('loading').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 300);
+        }, 500);
+    }
+    
     loadData() {
-        this.quitDate = localStorage.getItem('quitDate');
-        this.dailyCost = localStorage.getItem('dailyCost') || 30;
-        this.unit = localStorage.getItem('displayUnit') || 'days';
-        
-        // 更新UI
-        document.getElementById('dailyCost').value = this.dailyCost;
-        document.querySelector(`input[name="unit"][value="${this.unit}"]`).checked = true;
+        // 从本地存储加载数据
+        const saved = localStorage.getItem('quitSmokingData');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                this.state = { ...this.state, ...data };
+            } catch (e) {
+                console.error('加载数据失败:', e);
+            }
+        }
     }
-
-    saveSettings() {
-        this.dailyCost = parseFloat(document.getElementById('dailyCost').value) || 30;
-        this.unit = document.querySelector('input[name="unit"]:checked').value;
-        
-        localStorage.setItem('dailyCost', this.dailyCost);
-        localStorage.setItem('displayUnit', this.unit);
-        
-        this.updateDisplay();
-        this.showNotification('设置已保存');
+    
+    saveData() {
+        // 保存数据到本地存储
+        localStorage.setItem('quitSmokingData', JSON.stringify(this.state));
     }
-
+    
+    initUI() {
+        // 初始化主题
+        this.initTheme();
+        
+        // 初始化日期选择器
+        this.initDatePicker();
+        
+        // 更新所有显示
+        this.updateAllDisplays();
+        
+        // 初始化图表
+        this.initCharts();
+    }
+    
+    initTheme() {
+        const theme = localStorage.getItem('theme') || 'light';
+        this.state.theme = theme;
+        document.documentElement.setAttribute('data-theme', theme);
+        
+        // 更新切换按钮图标
+        const icon = document.querySelector('#themeToggle i');
+        icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    toggleTheme() {
+        const newTheme = this.state.theme === 'light' ? 'dark' : 'light';
+        this.state.theme = newTheme;
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        const icon = document.querySelector('#themeToggle i');
+        icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    initDatePicker() {
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('quitDatePicker');
+        if (dateInput) {
+            dateInput.max = today;
+            if (this.state.quitDate) {
+                dateInput.value = this.state.quitDate;
+            }
+        }
+    }
+    
+    calculateTime() {
+        if (!this.state.quitDate) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+        
+        const quitDate = new Date(this.state.quitDate + 'T00:00:00');
+        const now = new Date();
+        const diff = now.getTime() - quitDate.getTime();
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        return { days, hours, minutes, seconds };
+    }
+    
+    calculateSavings() {
+        const time = this.calculateTime();
+        const dailyCost = this.state.dailyCost || this.config.defaultDailyCost;
+        
+        const totalSaved = (time.days * dailyCost).toFixed(2);
+        const todaySaved = dailyCost.toFixed(2);
+        
+        // 计算月度节省（假设一个月30天）
+        const monthDays = Math.min(time.days, 30);
+        const monthSaved = (monthDays * dailyCost).toFixed(2);
+        
+        return { totalSaved, todaySaved, monthSaved };
+    }
+    
+    calculateHealthMetrics() {
+        const time = this.calculateTime();
+        const days = time.days;
+        
+        // 根据科学研究的恢复时间线计算
+        const lungRecovery = Math.min(Math.floor(days * 0.27), 100); // 大约1年完全恢复
+        const heartRisk = Math.min(Math.floor(days * 0.137), 50); // 心脏病风险降低50%
+        const nicotineFree = Math.min(Math.floor(days * 2.74), 100); // 大约90天清除尼古丁
+        
+        return { lungRecovery, heartRisk, nicotineFree };
+    }
+    
+    updateTimeDisplay() {
+        const time = this.calculateTime();
+        
+        document.getElementById('days').textContent = time.days;
+        document.getElementById('hours').textContent = time.hours.toString().padStart(2, '0');
+        document.getElementById('minutes').textContent = time.minutes.toString().padStart(2, '0');
+        document.getElementById('seconds').textContent = time.seconds.toString().padStart(2, '0');
+        
+        // 更新连续天数
+        document.getElementById('currentStreak').textContent = time.days;
+    }
+    
+    updateSavingsDisplay() {
+        const savings = this.calculateSavings();
+        
+        document.getElementById('totalSaved').textContent = savings.totalSaved;
+        document.getElementById('totalSavings').textContent = savings.totalSaved + '元';
+        document.getElementById('todaySaved').textContent = savings.todaySaved + '元';
+        document.getElementById('monthSaved').textContent = savings.monthSaved + '元';
+        
+        // 计算相当于什么物品
+        const coffeeCount = Math.floor(savings.totalSaved / 30);
+        document.getElementById('equivalentItem').textContent = coffeeCount + '杯咖啡';
+    }
+    
+    updateHealthDisplay() {
+        const health = this.calculateHealthMetrics();
+        
+        document.getElementById('lungRecovery').textContent = health.lungRecovery + '%';
+        document.getElementById('heartRisk').textContent = health.heartRisk + '%';
+        document.getElementById('nicotineFree').textContent = health.nicotineFree + '%';
+        document.getElementById('healthIndex').textContent = Math.floor((health.lungRecovery + health.heartRisk + health.nicotineFree) / 3);
+    }
+    
+    updateAllDisplays() {
+        this.updateTimeDisplay();
+        this.updateSavingsDisplay();
+        this.updateHealthDisplay();
+        this.updateMilestoneProgress();
+        this.updateGoalProgress();
+        this.updateMotivationText();
+    }
+    
+    updateMilestoneProgress() {
+        const time = this.calculateTime();
+        const milestones = this.config.milestones;
+        const nextMilestone = milestones.find(m => m > time.days) || milestones[milestones.length - 1];
+        const prevMilestone = milestones.reverse().find(m => m <= time.days) || 0;
+        
+        document.getElementById('nextMilestone').textContent = nextMilestone + '天';
+        
+        const progress = ((time.days - prevMilestone) / (nextMilestone - prevMilestone)) * 100;
+        document.getElementById('milestoneProgress').style.width = Math.min(progress, 100) + '%';
+    }
+    
+    updateGoalProgress() {
+        const savings = this.calculateSavings();
+        const goal = 5000; // 目标存款5000元
+        const progress = (parseFloat(savings.totalSaved) / goal) * 100;
+        
+        document.getElementById('goalProgress').textContent = savings.totalSaved + '/' + goal + '元';
+        document.getElementById('goalProgressFill').style.width = Math.min(progress, 100) + '%';
+    }
+    
+    updateMotivationText() {
+        const time = this.calculateTime();
+        const texts = [
+            "坚持下去，每一秒都很宝贵！",
+            "你已经战胜了这么多天，继续前进！",
+            "健康的未来正在向你招手！",
+            "每一次抵抗烟瘾都让你更强大！",
+            "为自己骄傲，你正在创造奇迹！"
+        ];
+        
+        const index = time.days % texts.length;
+        document.getElementById('motivationText').textContent = texts[index];
+    }
+    
+    startTimer() {
+        setInterval(() => {
+            this.updateTimeDisplay();
+        }, 1000);
+        
+        // 每分钟更新一次其他数据
+        setInterval(() => {
+            this.updateAllDisplays();
+        }, 60000);
+    }
+    
+    bindEvents() {
+        // 导航按钮
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const section = e.currentTarget.dataset.section;
+                this.switchSection(section);
+            });
+        });
+        
+        // 主题切换
+        document.getElementById('themeToggle').addEventListener('click', () => this.toggleTheme());
+        
+        // 设置戒烟日期按钮
+        document.getElementById('setQuitDateBtn').addEventListener('click', () => this.showModal('quitDateModal'));
+        
+        // 记录烟瘾按钮
+        document.getElementById('addCravingBtn').addEventListener('click', () => this.showModal('cravingModal'));
+        
+        // 模态框关闭
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => this.closeModal());
+        });
+        
+        // 模态框外部点击关闭
+        document.getElementById('modalOverlay').addEventListener('click', () => this.closeModal());
+        
+        // 确认戒烟日期
+        document.getElementById('confirmQuitDate')?.addEventListener('click', () => this.setQuitDate());
+        
+        // 快速日期按钮
+        document.querySelectorAll('.quick-date-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const days = parseInt(e.currentTarget.dataset.days);
+                this.setQuickDate(days);
+            });
+        });
+        
+        // 保存烟瘾记录
+        document.getElementById('saveCraving')?.addEventListener('click', () => this.saveCraving());
+        
+        // 强度选择
+        document.querySelectorAll('.intensity-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.intensity-btn').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+            });
+        });
+        
+        // 更多事件绑定...
+    }
+    
+    switchSection(sectionId) {
+        // 隐藏所有页面
+        document.querySelectorAll('.page').forEach(page => {
+            page.classList.remove('active');
+        });
+        
+        // 移除所有导航按钮的活动状态
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // 显示目标页面
+        document.getElementById(sectionId).classList.add('active');
+        
+        // 设置对应的导航按钮为活动状态
+        document.querySelector(`.nav-btn[data-section="${sectionId}"]`).classList.add('active');
+        
+        // 滚动到顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    showModal(modalId) {
+        document.getElementById('modalOverlay').style.display = 'block';
+        document.getElementById(modalId).style.display = 'block';
+        
+        // 防止背景滚动
+        document.body.style.overflow = 'hidden';
+    }
+    
+    closeModal() {
+        document.getElementById('modalOverlay').style.display = 'none';
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.style.display = 'none';
+        });
+        
+        // 恢复背景滚动
+        document.body.style.overflow = 'auto';
+    }
+    
     setQuitDate() {
-        const inputDate = document.getElementById('quitDateInput').value;
-        if (!inputDate) {
-            this.showNotification('请选择日期', 'error');
+        const dateInput = document.getElementById('quitDatePicker');
+        if (!dateInput.value) {
+            this.showNotification('请选择戒烟日期', 'error');
             return;
         }
         
-        this.quitDate = inputDate;
-        localStorage.setItem('quitDate', this.quitDate);
-        
-        this.updateDisplay();
-        this.showNotification('戒烟日期已设置！加油！');
+        this.state.quitDate = dateInput.value;
+        this.saveData();
+        this.updateAllDisplays();
+        this.closeModal();
+        this.showNotification('戒烟日期已设置！新的开始，加油！');
     }
-
-    setToday() {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('quitDateInput').value = today;
-        this.setQuitDate();
+    
+    setQuickDate(daysOffset) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysOffset);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        document.getElementById('quitDatePicker').value = dateStr;
     }
-
-    setYesterday() {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    saveCraving() {
+        const intensity = document.querySelector('.intensity-btn.active')?.dataset.intensity;
+        const copingMethod = document.getElementById('copingMethod').value;
+        const note = document.getElementById('cravingNote').value;
         
-        document.getElementById('quitDateInput').value = yesterdayStr;
-        this.setQuitDate();
-    }
-
-    calculateDays() {
-        if (!this.quitDate) return 0;
-        
-        const quitDate = new Date(this.quitDate);
-        const now = new Date();
-        const diffTime = now.getTime() - quitDate.getTime();
-        
-        return Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    }
-
-    calculateDuration() {
-        if (!this.quitDate) return { days: 0, hours: 0, minutes: 0 };
-        
-        const quitDate = new Date(this.quitDate);
-        const now = new Date();
-        const diffTime = now.getTime() - quitDate.getTime();
-        
-        const days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
-        
-        return { days, hours, minutes };
-    }
-
-    updateDisplay() {
-        const days = this.calculateDays();
-        const duration = this.calculateDuration();
-        
-        // 更新天数显示
-        document.getElementById('daysCount').textContent = days;
-        
-        // 更新节省金额
-        const moneySaved = (days * this.dailyCost).toFixed(2);
-        document.getElementById('moneySaved').textContent = moneySaved;
-        document.getElementById('shareMoney').textContent = moneySaved;
-        
-        // 更新健康评分（基于天数的简单算法）
-        const healthScore = Math.min(Math.floor(days * 10), 1000);
-        document.getElementById('healthScore').textContent = healthScore;
-        
-        // 更新日期信息
-        document.getElementById('quitDate').textContent = this.quitDate || '未设置';
-        document.getElementById('shareDays').textContent = days;
-        
-        // 更新时长显示
-        let durationText = '';
-        switch(this.unit) {
-            case 'days':
-                durationText = `${days} 天`;
-                break;
-            case 'hours':
-                const hours = days * 24 + duration.hours;
-                durationText = `${hours} 小时`;
-                break;
-            case 'minutes':
-                const minutes = days * 24 * 60 + duration.hours * 60 + duration.minutes;
-                durationText = `${minutes} 分钟`;
-                break;
+        if (!intensity) {
+            this.showNotification('请选择烟瘾强度', 'error');
+            return;
         }
-        document.getElementById('quitDuration').textContent = durationText;
         
-        // 更新里程碑
-        this.updateMilestones(days);
+        const craving = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            intensity: parseInt(intensity),
+            copingMethod,
+            note
+        };
+        
+        this.state.data.cravings.push(craving);
+        this.saveData();
+        this.closeModal();
+        this.showNotification('烟瘾记录已保存！');
+        
+        // 清空表单
+        document.getElementById('cravingNote').value = '';
     }
-
-    updateMilestones(days) {
-        const milestones = document.querySelectorAll('.milestone');
-        milestones.forEach(milestone => {
-            const targetDays = parseInt(milestone.dataset.days);
-            if (days >= targetDays) {
-                milestone.classList.add('completed');
-                milestone.innerHTML = `<i class="fas fa-check-circle"></i> ${milestone.textContent}`;
-            }
-        });
-    }
-
-    startTimer() {
-        // 每秒更新一次
-        setInterval(() => {
-            if (this.quitDate) {
-                this.updateDisplay();
-            }
-        }, 1000);
-    }
-
-    resetData() {
-        if (confirm('确定要重置所有数据吗？此操作不可撤销！')) {
-            localStorage.removeItem('quitDate');
-            localStorage.removeItem('dailyCost');
-            localStorage.removeItem('displayUnit');
-            
-            this.quitDate = null;
-            this.dailyCost = 30;
-            this.unit = 'days';
-            
-            document.getElementById('dailyCost').value = this.dailyCost;
-            document.querySelector('input[name="unit"][value="days"]').checked = true;
-            document.getElementById('quitDateInput').value = '';
-            
-            this.updateDisplay();
-            this.showNotification('数据已重置');
-        }
-    }
-
-    copyShareText() {
-        const days = this.calculateDays();
-        const moneySaved = (days * this.dailyCost).toFixed(2);
-        
-        const text = `🚭 我已成功戒烟 ${days} 天！\n` +
-                    `💰 节省了 ${moneySaved} 元\n` +
-                    `💪 坚持就是胜利！\n` +
-                    `#戒烟记录 #健康生活`;
-        
-        navigator.clipboard.writeText(text).then(() => {
-            this.showNotification('分享文本已复制到剪贴板');
-        }).catch(err => {
-            console.error('复制失败:', err);
-            this.showNotification('复制失败，请手动复制', 'error');
-        });
-    }
-
-    generateShareImage() {
-        const days = this.calculateDays();
-        const moneySaved = (days * this.dailyCost).toFixed(2);
-        const duration = this.calculateDuration();
-        
-        const canvas = document.getElementById('shareCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // 清除画布
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // 背景渐变
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, '#4CAF50');
-        gradient.addColorStop(1, '#2196F3');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 标题
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 48px "Segoe UI"';
-        ctx.textAlign = 'center';
-        ctx.fillText('🚭 戒烟成就', canvas.width / 2, 80);
-        
-        // 天数
-        ctx.font = 'bold 72px "Segoe UI"';
-        ctx.fillText(`${days} 天`, canvas.width / 2, 180);
-        
-        // 统计信息
-        ctx.font = 'bold 32px "Segoe UI"';
-        ctx.fillText(`节省金额: ${moneySaved} 元`, canvas.width / 2, 250);
-        ctx.fillText(`戒烟时长: ${duration.days}天${duration.hours}小时${duration.minutes}分`, canvas.width / 2, 300);
-        
-        // 鼓励语
-        ctx.font = 'bold 28px "Segoe UI"';
-        ctx.fillText('坚持就是胜利！继续加油！', canvas.width / 2, 350);
-        
-        // 底部信息
-        ctx.font = '20px "Segoe UI"';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.fillText('戒烟日期记录 - quitsmoking.tracker', canvas.width / 2, 390);
-        
-        // 显示模态框
-        document.getElementById('imagePreview').style.display = 'block';
-    }
-
-    downloadImage() {
-        const canvas = document.getElementById('shareCanvas');
-        const link = document.createElement('a');
-        link.download = `戒烟成就-${new Date().toISOString().slice(0, 10)}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    }
-
+    
     showNotification(message, type = 'success') {
         const notification = document.getElementById('notification');
-        notification.textContent = message;
-        notification.style.background = type === 'error' ? '#f44336' : '#4CAF50';
-        notification.style.display = 'block';
+        const messageEl = document.getElementById('notificationMessage');
+        const icon = notification.querySelector('i');
+        
+        messageEl.textContent = message;
+        
+        if (type === 'error') {
+            notification.style.background = 'var(--danger-color)';
+            icon.className = 'fas fa-exclamation-circle';
+        } else {
+            notification.style.background = 'var(--success-color)';
+            icon.className = 'fas fa-check-circle';
+        }
+        
+        notification.style.display = 'flex';
         
         setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
     }
+    
+    // 更多方法...
 }
 
-// PWA 支持
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => {
-            console.log('ServiceWorker 注册失败:', err);
-        });
+// 图表初始化
+function initCharts() {
+    // 初始化趋势图表
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+            datasets: [{
+                label: '每日烟瘾次数',
+                data: [12, 19, 3, 5, 2, 3],
+                borderColor: 'var(--primary-color)',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // 初始化烟瘾分布图表
+    const cravingCtx = document.getElementById('cravingChart').getContext('2d');
+    new Chart(cravingCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['早晨', '上午', '下午', '晚上', '深夜'],
+            datasets: [{
+                data: [30, 20, 25, 15, 10],
+                backgroundColor: [
+                    '#4CAF50',
+                    '#2196F3',
+                    '#FF9800',
+                    '#9C27B0',
+                    '#f44336'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
     });
 }
 
 // 初始化应用
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new QuitSmokingTracker();
-    
-    // 添加到全局对象，方便调试
-    window.app = app;
-    
-    // 初始加载完成后显示欢迎信息
-    setTimeout(() => {
-        if (!app.quitDate) {
-            app.showNotification('欢迎使用戒烟日期记录！请先设置戒烟日期。');
-        }
-    }, 1000);
-});
+let app;
 
-// 监听页面可见性变化，切换回来时更新数据
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-        setTimeout(() => {
-            if (window.app) {
-                window.app.updateDisplay();
-            }
-        }, 100);
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    app = new QuitSmokingApp();
+    initCharts();
+    
+    // 全局导出以便调试
+    window.app = app;
 });
